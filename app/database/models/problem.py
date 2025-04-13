@@ -5,6 +5,7 @@ from mongoengine import (
 
 
 class Problem(Document):
+    DoesNotExist = None
     id = ObjectIdField(primary_key=True)
     title = StringField(required=True, max_length=255)
     description = StringField()
