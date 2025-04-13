@@ -1,21 +1,19 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, ForeignKey
-
-Base = declarative_base()
-
-contest_language_table = Table(
-    'contest_language',
-    Base.metadata,
-    Column('contest_id', Integer, ForeignKey('contest.id'), primary_key=True),
-    Column('language_id', Integer, ForeignKey('language.id'), primary_key=True)
-)
+from mongoengine import connect
+import os
 
 from .input_type import InputType
 from .output_type import OutputType
+from .language import Language
 from .contest import Contest
+from .contest_language import ContestLanguage
 from .problem import Problem
 from .test_case import TestCase
-from .language import Language
 from .submission import Submission
 from .submission_result import SubmissionResult
 from .contest_result import ContestResult
+
+MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/contest_db')
+
+
+def init_db():
+    connect(host=MONGO_URI)
