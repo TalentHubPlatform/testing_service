@@ -43,3 +43,13 @@ class ContestLanguageRepository(BaseRepository[ContestLanguage]):
             'contest_id': ObjectId(contest_id),
             'language_id': ObjectId(language_id)
         })
+
+
+def add_language_to_contest(contest_id, language_id):
+    contest_language = ContestLanguage(
+        contest_id=ObjectId(contest_id),
+        language_id=ObjectId(language_id)
+    )
+    contest_language.save()
+
+    return contest_language
