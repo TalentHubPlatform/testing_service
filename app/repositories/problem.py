@@ -31,4 +31,3 @@ class ProblemRepository(BaseRepository[Problem]):
         problem.test_cases = TestCase.objects(problem_id=ObjectId(problem_id))
 
         return problem
-

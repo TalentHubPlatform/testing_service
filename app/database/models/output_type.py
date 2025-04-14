@@ -2,6 +2,7 @@ from mongoengine import Document, StringField, ObjectIdField
 
 
 class OutputType(Document):
+    DoesNotExist = None
     id = ObjectIdField(primary_key=True)
     name = StringField(required=True, max_length=100)
     description = StringField()

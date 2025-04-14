@@ -2,6 +2,7 @@ from mongoengine import Document, IntField, ReferenceField, ObjectIdField
 
 
 class ContestResult(Document):
+    DoesNotExist = None
     id = ObjectIdField(primary_key=True)
     contest_id = ReferenceField('Contest', required=True)
     user_id = IntField(required=True)
