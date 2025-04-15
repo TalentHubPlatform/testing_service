@@ -1,6 +1,5 @@
 from typing import List
 
-from api.dependencies import get_current_user, get_admin_user
 from services import contest_service
 from database.schemas.contest import (
     ContestCreate,
@@ -9,7 +8,7 @@ from database.schemas.contest import (
     ContestWithProblems
 )
 from database.schemas.contest_result import ContestResultInDB
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from starlette import status
 
 contest_router = APIRouter()
@@ -38,8 +37,7 @@ async def get_contest_by_id(contest_id: str):
 
 @contest_router.post("/", response_model=ContestInDB, status_code=status.HTTP_201_CREATED)
 async def create_contest(
-        contest: ContestCreate,
-        current_user=Depends(get_admin_user)
+        contest: ContestCreate
 ):
     result = contest_service.create_contest(
         name=contest.name,
@@ -68,8 +66,7 @@ async def create_contest(
 @contest_router.put("/{contest_id}", response_model=ContestInDB)
 async def update_contest(
         contest_id: str,
-        contest: ContestUpdate,
-        current_user=Depends(get_admin_user)
+        contest: ContestUpdate
 ):
     data = contest.model_dump(exclude_unset=True)
 
@@ -100,8 +97,7 @@ async def update_contest(
 
 @contest_router.delete("/{contest_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_contest(
-        contest_id: str,
-        current_user=Depends(get_admin_user)
+        contest_id: str
 ):
     result = contest_service.delete_contest(contest_id)
 
@@ -132,8 +128,7 @@ async def get_contest_results(contest_id: str):
 @contest_router.post("/{contest_id}/languages/{language_id}", status_code=status.HTTP_200_OK)
 async def add_language_to_contest(
         contest_id: str,
-        language_id: str,
-        current_user=Depends(get_admin_user)
+        language_id: str
 ):
     result = contest_service.add_language_to_contest(contest_id, language_id)
 
@@ -149,8 +144,7 @@ async def add_language_to_contest(
 @contest_router.delete("/{contest_id}/languages/{language_id}", status_code=status.HTTP_200_OK)
 async def remove_language_from_contest(
         contest_id: str,
-        language_id: str,
-        current_user=Depends(get_admin_user)
+        language_id: str
 ):
     result = contest_service.remove_language_from_contest(contest_id, language_id)
 
