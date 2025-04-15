@@ -40,4 +40,51 @@ class SubmissionRepository(BaseRepository[Submission]):
         if 'submitted_at' not in data:
             data['submitted_at'] = datetime.datetime.now(datetime.UTC)
         return self.create(data)
-    
+
+
+def create(submission_data):
+    submission = Submission(**submission_data)
+    submission.save()
+
+    return submission
+
+
+def find(user_id, problem_id, contest_id):
+    try:
+        return Submission.objects.get(user_id=user_id, problem_id=ObjectId(problem_id), contest_id=ObjectId(contest_id))
+
+    except Submission.DoesNotExist:
+        return None
+
+
+def find_with_results(submission_id):
+    submission = Submission.objects.get(id=ObjectId(submission_id))
+
+    if not submission:
+        return None
+
+    submission.results = SubmissionResult.objects(submission_id=ObjectId(submission_id))
+
+    return submission
+
+
+def update(submission_id, param):
+    submission = Submission.objects.get(id=ObjectId(submission_id))
+
+    if not submission:
+        return None
+
+    for key, value in param.items():
+        setattr(submission, key, value)
+
+    submission.save()
+
+    return submission
+
+
+def find_by_id(submission_id):
+    try:
+        return Submission.objects.get(id=ObjectId(submission_id))
+
+    except Submission.DoesNotExist:
+        return None

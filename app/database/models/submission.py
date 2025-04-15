@@ -3,6 +3,7 @@ import datetime
 
 
 class Submission(Document):
+    DoesNotExist = None
     id = ObjectIdField(primary_key=True)
     user_id = IntField(required=True)
     problem_id = ReferenceField('Problem', required=True)
