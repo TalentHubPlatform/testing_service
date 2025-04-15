@@ -8,7 +8,7 @@ class TestCaseBase(MongoBaseModel):
     problem_id: PyObjectId
     input_data: Optional[str] = None
     expected_output: Optional[str] = None
-    weight: int = 1
+    weight: Optional[int] = 1
     is_sample: bool = False
 
 
