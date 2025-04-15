@@ -32,7 +32,7 @@ class APIPrefix(BaseModel):
 
 
 class DatabaseConfig(BaseModel):
-    url: str = "mongodb://localhost:27017"
+    url: str = "mongodb://testing_service_mongo:27017"
     db_name: str = "contest_db"
 
 
