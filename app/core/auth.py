@@ -5,13 +5,11 @@ from starlette import status
 from core.config import settings
 from core.security import oauth2_scheme
 from core.utils.unit_of_work import CachedSQLAlchemyUnitOfWork
-
-
 # from app.services.user import UserService
 
 
 async def get_current_user(
-        uow=Depends(CachedSQLAlchemyUnitOfWork), token: str = Depends(oauth2_scheme)
+    uow=Depends(CachedSQLAlchemyUnitOfWork), token: str = Depends(oauth2_scheme)
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -34,19 +32,5 @@ async def get_current_user(
 
     if user is None:
         raise credentials_exception
-
-    return user
-
-
-async def get_admin_user(
-        uow=Depends(CachedSQLAlchemyUnitOfWork), token: str = Depends(oauth2_scheme)
-):
-    user = await get_current_user(uow, token)
-
-    if not user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Operation not permitted",
-        )
 
     return user

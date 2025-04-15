@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  testing_service:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    working_dir: /app
+    tty: true
+    stdin_open: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - ..:/app
+    environment:
+      APP_CONFIG__SECURITY__KEY: "709cb22f047a59f492c4d6407e627240e2272bda11ab791c16fb4f4661f7285a95ba6efbc1bbf762cddcc3710a1487f4a3242f21b2d9cd751b3154a452c5a286"
+      APP_CONFIG__SECURITY__ALGORITHM: "HS256"
+      APP_CONFIG__SECURITY__ACCESS_TOKEN_EXPIRES_MINUTES: 30
+      APP_CONFIG__DB__URI: "mongodb://testing_service_mongo:27017"
+      APP_CONFIG__DB__DB_NAME: "contest_db"
+      APP_CONFIG__CACHING__URL: "redis://testing_service_redis:6379/0"
+    depends_on:
+      - "testing_service_mongo"
+      - "testing_service_redis"
+
+  testing_service_mongo:
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  testing_service_redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mongo_data:
+  redis_data:

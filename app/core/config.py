@@ -1,36 +1,63 @@
-import datetime
+from typing import Literal
 
-import jwt
-from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
+from dotenv import find_dotenv, load_dotenv
+from pydantic import BaseModel, RedisDsn
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.core.config import settings
+load_dotenv(find_dotenv(".env"))
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v0/auth/login")
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def get_hashed_password(password: str) -> str:
-    return pwd_context.hash(password)
+LOG_DEFAULT_FORMAT = (
+    "[%(asctime)s.%(msecs)03d] %(module)10s:%(lineno)-3d %(levelname)-7s - %(message)s"
+)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+class LoggingConfig(BaseModel):
+    log_level: Literal[
+        "debug",
+        "info",
+        "warning",
+        "error",
+        "critical",
+    ] = "info"
+    log_format: str = LOG_DEFAULT_FORMAT
 
 
-def create_access_token(*, data: dict, expires_delta: datetime.timedelta = None):
-    to_encode = data.copy()
+class APIV0Prefix(BaseModel):
+    pass
 
-    if expires_delta:
-        expire = datetime.datetime.now(tz=datetime.timezone.utc) + expires_delta
-    else:
-        expire = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
-            minutes=settings.security.access_token_expires_minutes
-        )
 
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode, settings.security.secret_key, algorithm=settings.security.algorithm
+class APIPrefix(BaseModel):
+    prefix: str = "/api"
+    v0: APIV0Prefix = APIV0Prefix()
+
+
+class DatabaseConfig(BaseModel):
+    url: str = "mongodb://localhost:27017"
+    db_name: str = "contest_db"
+
+
+class CachingConfig(BaseModel):
+    url: RedisDsn = "redis://localhost:6379/0"
+
+
+class SecurityConfig(BaseModel):
+    key: str = "your-secret-key"
+    algorithm: str = "HS256"
+    access_token_expires_minutes: int = 30
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        env_nested_delimiter="__",
+        env_prefix="APP_CONFIG__",
     )
+    api: APIPrefix = APIPrefix()
+    logging: LoggingConfig = LoggingConfig()
+    db: DatabaseConfig = DatabaseConfig()
+    caching: CachingConfig = CachingConfig()
+    security: SecurityConfig = SecurityConfig()
 
-    return encoded_jwt
+
+settings = Settings()

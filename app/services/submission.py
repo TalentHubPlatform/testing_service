@@ -8,7 +8,7 @@ from repositories import (
     contest_repo,
     contest_result_repo
 )
-from judge import JudgeService
+from .judge import JudgeService
 
 
 class SubmissionService:
