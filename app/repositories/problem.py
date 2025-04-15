@@ -31,3 +31,11 @@ class ProblemRepository(BaseRepository[Problem]):
         problem.test_cases = TestCase.objects(problem_id=ObjectId(problem_id))
 
         return problem
+
+
+def find_by_id(problem_id):
+    try:
+        return Problem.objects.get(id=ObjectId(problem_id))
+
+    except Problem.DoesNotExist:
+        return None
