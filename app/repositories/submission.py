@@ -7,84 +7,76 @@ from database.models.submission import Submission
 from database.models.submission_result import SubmissionResult
 
 
-def find_user_last_submission(user_id: int, problem_id: str) -> Optional[Submission]:
-    submissions = Submission.objects(user_id=user_id, problem_id=ObjectId(problem_id)).order_by('-submitted_at')
-    return submissions.first() if submissions else None
-
-
-def find_by_user(user_id: int, skip: int = 0, limit: int = 100) -> List[Submission]:
-    return Submission.objects(user_id=user_id).order_by('-submitted_at').skip(skip).limit(limit)
-
-
-def find_by_problem(problem_id: str, skip: int = 0, limit: int = 100) -> List[Submission]:
-    return Submission.objects(problem_id=ObjectId(problem_id)).order_by('-submitted_at').skip(skip).limit(limit)
-
-
-def find_by_contest(contest_id: str, skip: int = 0, limit: int = 100) -> List[Submission]:
-    return Submission.objects(contest_id=ObjectId(contest_id)).order_by('-submitted_at').skip(skip).limit(limit)
-
-
 class SubmissionRepository(BaseRepository[Submission]):
     def __init__(self):
         super().__init__(Submission)
 
-    def find_with_results(self, submission_id: str) -> Optional[Submission]:
-        submission = self.find_by_id(submission_id)
-        if not submission:
+    @staticmethod
+    def find_user_last_submission(user_id: int, problem_id: str) -> Optional[Submission]:
+        submissions = Submission.objects(user_id=user_id, problem_id=ObjectId(problem_id)).order_by('-submitted_at')
+        return submissions.first() if submissions else None
+
+    @staticmethod
+    def find_by_user(user_id: int, skip: int = 0, limit: int = 100) -> List[Submission]:
+        return Submission.objects(user_id=user_id).order_by('-submitted_at').skip(skip).limit(limit)
+
+    @staticmethod
+    def find_by_problem(problem_id: str, skip: int = 0, limit: int = 100) -> List[Submission]:
+        return Submission.objects(problem_id=ObjectId(problem_id)).order_by('-submitted_at').skip(skip).limit(limit)
+
+    @staticmethod
+    def find_by_contest(contest_id: str, skip: int = 0, limit: int = 100) -> List[Submission]:
+        return Submission.objects(contest_id=ObjectId(contest_id)).order_by('-submitted_at').skip(skip).limit(limit)
+
+    @staticmethod
+    def create(submission_data: dict) -> Submission:
+        submission = Submission(**submission_data)
+        submission.save()
+        return submission
+
+    @staticmethod
+    def find(user_id: int, problem_id: str, contest_id: str) -> Optional[Submission]:
+        try:
+            return Submission.objects.get(
+                user_id=user_id,
+                problem_id=ObjectId(problem_id),
+                contest_id=ObjectId(contest_id)
+            )
+        except Submission.DoesNotExist:
+            return None
+
+    @staticmethod
+    def find_by_id(submission_id: str) -> Optional[Submission]:
+        try:
+            return Submission.objects.get(id=ObjectId(submission_id))
+        except Submission.DoesNotExist:
+            return None
+
+    @staticmethod
+    def update(submission_id: str, param: dict) -> Optional[Submission]:
+        try:
+            submission = Submission.objects.get(id=ObjectId(submission_id))
+        except Submission.DoesNotExist:
+            return None
+
+        for key, value in param.items():
+            setattr(submission, key, value)
+
+        submission.save()
+        return submission
+
+    @staticmethod
+    def find_with_results(submission_id: str) -> Optional[Submission]:
+        try:
+            submission = Submission.objects.get(id=ObjectId(submission_id))
+        except Submission.DoesNotExist:
             return None
 
         submission.results = SubmissionResult.objects(submission_id=ObjectId(submission_id))
         return submission
 
-    def create_with_time(self, data: dict) -> Submission:
+    @staticmethod
+    def create_with_time(data: dict) -> Submission:
         if 'submitted_at' not in data:
-            data['submitted_at'] = datetime.datetime.now(datetime.UTC)
-        return self.create(data)
-
-
-def create(submission_data):
-    submission = Submission(**submission_data)
-    submission.save()
-
-    return submission
-
-
-def find(user_id, problem_id, contest_id):
-    try:
-        return Submission.objects.get(user_id=user_id, problem_id=ObjectId(problem_id), contest_id=ObjectId(contest_id))
-
-    except Submission.DoesNotExist:
-        return None
-
-
-def find_with_results(submission_id):
-    submission = Submission.objects.get(id=ObjectId(submission_id))
-
-    if not submission:
-        return None
-
-    submission.results = SubmissionResult.objects(submission_id=ObjectId(submission_id))
-
-    return submission
-
-
-def update(submission_id, param):
-    submission = Submission.objects.get(id=ObjectId(submission_id))
-
-    if not submission:
-        return None
-
-    for key, value in param.items():
-        setattr(submission, key, value)
-
-    submission.save()
-
-    return submission
-
-
-def find_by_id(submission_id):
-    try:
-        return Submission.objects.get(id=ObjectId(submission_id))
-
-    except Submission.DoesNotExist:
-        return None
+            data['submitted_at'] = datetime.now(datetime.UTC)
+        return SubmissionRepository.create(data)
