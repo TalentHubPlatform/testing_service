@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Any
 
-from app.repositories import (
+from repositories import (
     contest_repo,
     contest_language_repo,
     contest_result_repo
