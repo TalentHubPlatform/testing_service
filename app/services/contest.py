@@ -1,102 +1,104 @@
 from typing import Dict, List, Optional, Any
 
-from repositories import (
-    contest,
-    contest_language,
-    contest_result
+from app.repositories import (
+    contest_repo,
+    contest_language_repo,
+    contest_result_repo
 )
 
 
 class ContestService:
     @staticmethod
     def create_contest(name: str, description: str = None,
-                       event_id: int = None, date_id: int = None) -> Dict[str, Any]:
-        existing = contest.find_by_name(name)
-
+                       event_id: int = None, date_id: int = None,
+                       track_id: int = None) -> Dict[str, Any]:
+        existing = contest_repo.find_by_name(name)
         if existing:
-            return {"success": False, "message": "contest with this name already exists"}
+            return {"success": False, "message": "Contest with this name already exists"}
 
         contest_data = {
             "name": name,
             "description": description,
             "event_id": event_id,
-            "date_id": date_id
+            "date_id": date_id,
+            "track_id": track_id,
+            "is_active": True
         }
 
-        cont = contest.create(contest_data)
+        contest = contest_repo.create(contest_data)
 
         return {
             "success": True,
-            "message": "contest created successfully",
-            "contest_id": str(cont.id)
+            "message": "Contest created successfully",
+            "contest_id": str(contest.id)
         }
 
     @staticmethod
     def update_contest(contest_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        cont = contest.find_by_id(contest_id)
+        contest = contest_repo.find_by_id(contest_id)
+        if not contest:
+            return {"success": False, "message": "Contest not found"}
 
-        if not cont:
-            return {"success": False, "message": "contest not found"}
-
-        if "name" in data and data["name"] != cont.name:
-            existing = contest.find_by_name(data["name"])
-
+        if "name" in data and data["name"] != contest.name:
+            existing = contest_repo.find_by_name(data["name"])
             if existing and str(existing.id) != contest_id:
-                return {"success": False, "message": "contest with this name already exists"}
+                return {"success": False, "message": "Contest with this name already exists"}
 
-        updated_contest = contest.update(contest_id, data)
+        updated_contest = contest_repo.update(contest_id, data)
 
         if not updated_contest:
             return {"success": False, "message": "Error updating contest"}
 
         return {
             "success": True,
-            "message": "contest updated successfully",
+            "message": "Contest updated successfully",
             "contest_id": contest_id
         }
 
     @staticmethod
     def delete_contest(contest_id: str) -> Dict[str, Any]:
-        cont = contest.find_by_id(contest_id)
-        if not cont:
-            return {"success": False, "message": "contest not found"}
+        contest = contest_repo.find_by_id(contest_id)
+        if not contest:
+            return {"success": False, "message": "Contest not found"}
 
-        result = contest.delete(contest_id)
+        result = contest_repo.delete(contest_id)
 
         if not result:
             return {"success": False, "message": "Error deleting contest"}
 
         return {
             "success": True,
-            "message": "contest deleted successfully"
+            "message": "Contest deleted successfully"
         }
 
     @staticmethod
     def get_contest(contest_id: str) -> Optional[Dict[str, Any]]:
-        cont = contest.find_with_problems(contest_id)
-        if not cont:
+        contest = contest_repo.find_with_problems(contest_id)
+        if not contest:
             return None
 
-        languages = contest_language.find_languages_for_contest(contest_id)
+        languages = contest_language_repo.find_languages_for_contest(contest_id)
 
         result = {
-            "id": str(cont.id),
-            "name": cont.name,
-            "description": cont.description,
-            "event_id": cont.event_id,
-            "date_id": cont.date_id,
+            "id": str(contest.id),
+            "name": contest.name,
+            "description": contest.description,
+            "event_id": contest.event_id,
+            "date_id": contest.date_id,
+            "track_id": contest.track_id,
+            "is_active": contest.is_active,
             "problems": [],
             "languages": []
         }
 
-        if hasattr(cont, "problems"):
-            for prob in cont.problems:
+        if hasattr(contest, "problems"):
+            for problem in contest.problems:
                 result["problems"].append({
-                    "id": str(prob.id),
-                    "title": prob.title,
-                    "description": prob.description,
-                    "time_limit": prob.time_limit,
-                    "memory_limit": prob.memory_limit
+                    "id": str(problem.id),
+                    "title": problem.title,
+                    "description": problem.description,
+                    "time_limit": problem.time_limit,
+                    "memory_limit": problem.memory_limit
                 })
 
         for language in languages:
@@ -110,29 +112,30 @@ class ContestService:
 
     @staticmethod
     def get_contests(skip: int = 0, limit: int = 20) -> List[Dict[str, Any]]:
-        contests = contest.find_all(skip, limit)
+        contests = contest_repo.find_all(skip, limit)
 
         result = []
-
-        for cont in contests:
+        for contest in contests:
             result.append({
-                "id": str(cont.id),
-                "name": cont.name,
-                "description": cont.description,
-                "event_id": cont.event_id,
-                "date_id": cont.date_id
+                "id": str(contest.id),
+                "name": contest.name,
+                "description": contest.description,
+                "event_id": contest.event_id,
+                "date_id": contest.date_id,
+                "track_id": contest.track_id,
+                "is_active": contest.is_active
             })
 
         return result
 
     @staticmethod
     def add_language_to_contest(contest_id: str, language_id: str) -> Dict[str, Any]:
-        cont = contest.find_by_id(contest_id)
-        if not cont:
-            return {"success": False, "message": "contest not found"}
+        contest = contest_repo.find_by_id(contest_id)
+        if not contest:
+            return {"success": False, "message": "Contest not found"}
 
         try:
-            contest_language.add_language_to_contest(contest_id, language_id)
+            contest_language_repo.add_language_to_contest(contest_id, language_id)
             return {
                 "success": True,
                 "message": "Language added to contest successfully"
@@ -142,11 +145,11 @@ class ContestService:
 
     @staticmethod
     def remove_language_from_contest(contest_id: str, language_id: str) -> Dict[str, Any]:
-        cont = contest.find_by_id(contest_id)
-        if not cont:
-            return {"success": False, "message": "contest not found"}
+        contest = contest_repo.find_by_id(contest_id)
+        if not contest:
+            return {"success": False, "message": "Contest not found"}
 
-        result = contest_language.remove_language_from_contest(contest_id, language_id)
+        result = contest_language_repo.remove_language_from_contest(contest_id, language_id)
 
         if result:
             return {
@@ -158,15 +161,13 @@ class ContestService:
 
     @staticmethod
     def get_contest_results(contest_id: str) -> List[Dict[str, Any]]:
-        cont = contest.find_by_id(contest_id)
-
-        if not cont:
+        contest = contest_repo.find_by_id(contest_id)
+        if not contest:
             return []
 
-        results = contest_result.find_by_contest(contest_id)
+        results = contest_result_repo.find_by_contest(contest_id)
 
         result = []
-
         for r in results:
             result.append({
                 "user_id": r.user_id,
@@ -181,3 +182,36 @@ class ContestService:
             r["rank"] = i + 1
 
         return result
+
+    @staticmethod
+    def find_contests_by_track(track_id: int) -> List[Dict[str, Any]]:
+        contests = contest_repo.find(track_id=track_id)
+
+        result = []
+        for contest in contests:
+            result.append({
+                "id": str(contest.id),
+                "name": contest.name,
+                "description": contest.description,
+                "event_id": contest.event_id,
+                "date_id": contest.date_id,
+                "track_id": contest.track_id,
+                "is_active": contest.is_active
+            })
+
+        return result
+
+    @staticmethod
+    def finish_contests_by_track(track_id: int) -> Dict[str, Any]:
+        contests = contest_repo.find(track_id=track_id, is_active=True)
+
+        finished_count = 0
+        for contest in contests:
+            contest_repo.update(str(contest.id), {"is_active": False})
+            finished_count += 1
+
+        return {
+            "success": True,
+            "message": f"Successfully finished {finished_count} contests for track {track_id}",
+            "finished_count": finished_count
+        }

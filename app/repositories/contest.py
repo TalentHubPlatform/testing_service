@@ -6,79 +6,36 @@ from database.models.contest import Contest
 from database.models.problem import Problem
 
 
-def find_by_name(name: str) -> Optional[Contest]:
-    try:
-        return Contest.objects.get(name=name)
-    except Contest.DoesNotExist:
-        return None
-
-
-def find_active() -> List[Contest]:
-    return Contest.objects.all()
-
-
-def find_by_id(contest_id=None) -> Optional[Contest]:
-    try:
-        return Contest.objects.get(id=ObjectId(contest_id))
-    except Contest.DoesNotExist:
-        return None
-
-
 class ContestRepository(BaseRepository[Contest]):
     def __init__(self):
         super().__init__(Contest)
 
+    @staticmethod
+    def find_by_name(name: str) -> Optional[Contest]:
+        try:
+            return Contest.objects.get(name=name)
+        except Contest.DoesNotExist:
+            return None
+
+    @staticmethod
     def find_with_problems(self, contest_id: str) -> Optional[Contest]:
         contest = self.find_by_id(contest_id)
         if not contest:
             return None
 
         contest.problems = Problem.objects(contest_id=ObjectId(contest_id))
+
         return contest
 
+    @staticmethod
+    def find_active() -> List[Contest]:
+        return Contest.objects(is_active=True).all()
 
-def create(contest_data):
-    contest = Contest(**contest_data)
-    contest.save()
+    @staticmethod
+    def find_by_track(track_id: int, active_only: bool = False) -> List[Contest]:
+        query = {'track_id': track_id}
 
-    return contest
+        if active_only:
+            query['is_active'] = True
 
-
-def update(contest_id, data):
-    contest = find_by_id(contest_id)
-    if not contest:
-        return None
-
-    for key, value in data.items():
-        setattr(contest, key, value)
-
-    contest.save()
-
-    return contest
-
-
-def delete(contest_id):
-    contest = find_by_id(contest_id)
-
-    if not contest:
-        return False
-
-    contest.delete()
-
-    return True
-
-
-def find_with_problems(contest_id):
-    contest = find_by_id(contest_id)
-
-    if not contest:
-        return None
-
-    contest.problems = Problem.objects(contest_id=ObjectId(contest_id))
-
-    return contest
-
-
-def find_all(skip, limit):
-    contests = Contest.objects.skip(skip).limit(limit)
-    return contests
+        return Contest.objects(**query).all()

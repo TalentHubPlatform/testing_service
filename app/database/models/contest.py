@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, IntField
+from mongoengine import Document, StringField, IntField, BooleanField
 
 
 class Contest(Document):
@@ -8,10 +8,12 @@ class Contest(Document):
     description = StringField()
     event_id = IntField()
     date_id = IntField()
+    track_id = IntField()
+    is_active = BooleanField(default=True)
 
     meta = {
         'collection': 'contests',
-        'indexes': ['name', 'event_id', 'date_id']
+        'indexes': ['name', 'event_id', 'date_id', 'track_id', 'is_active']
     }
 
     def __repr__(self):

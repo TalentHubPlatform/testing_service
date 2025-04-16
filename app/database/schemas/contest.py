@@ -20,6 +20,8 @@ class ContestUpdate(MongoBaseModel):
     description: Optional[str] = None
     event_id: Optional[int] = None
     date_id: Optional[int] = None
+    track_id: Optional[int] = None
+    is_active: Optional[bool] = None
 
 
 class ContestInDB(ContestBase):
